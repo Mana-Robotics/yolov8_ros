@@ -58,13 +58,13 @@ def generate_launch_description():
     input_image_topic = LaunchConfiguration("input_image_topic")
     input_image_topic_cmd = DeclareLaunchArgument(
         "input_image_topic",
-        default_value="/camera/rgb/image_raw",
+        default_value="/zed2i/zed_node/left/image_rect_color",
         description="Name of the input image topic")
 
     input_points_topic = LaunchConfiguration("input_points_topic")
     input_points_topic_cmd = DeclareLaunchArgument(
         "input_points_topic",
-        default_value="/camera/depth_registered/points",
+        default_value="/zed2i/zed_node/point_cloud/cloud_registered",
         description="Name of the input points topic")
 
     target_frame = LaunchConfiguration("target_frame")
