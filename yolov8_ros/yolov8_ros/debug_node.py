@@ -80,11 +80,12 @@ class DebugNode(Node):
         cv2.rectangle(cv_image, min_pt, max_pt, color, 2)
 
         # write text
-        label = "{} ({}) ({:.3f})".format(label, str(track_id), score)
-        pos = (min_pt[0] + 5, min_pt[1] + 25)
+        # label = "{} ({}) ({:.3f})".format(label, str(track_id), score)
+        label = "{} ({:.3f})".format(label, score)
+        pos = (max_pt[0] + 5, min_pt[1] + 25)
         font = cv2.FONT_HERSHEY_SIMPLEX
         cv2.putText(cv_image, label, pos, font,
-                    1, color, 1, cv2.LINE_AA)
+                    1, color, 2, cv2.LINE_AA)
 
         return cv_image
 
@@ -140,7 +141,11 @@ class DebugNode(Node):
         marker.header.frame_id = bbox3d.frame_id
 
         marker.ns = "yolov8_3d"
-        marker.type = Marker.CUBE
+        if detection.class_name == "apple":
+            marker.type = Marker.SPHERE
+        else:
+            marker.type = Marker.CUBE
+
         marker.action = Marker.ADD
         marker.frame_locked = False
 
@@ -156,12 +161,113 @@ class DebugNode(Node):
         marker.scale.y = bbox3d.size.y
         marker.scale.z = bbox3d.size.z
 
+        # marker.color.b = 0.0
+        # marker.color.g = detection.score * 255.0
+        # marker.color.r = (1.0 - detection.score) * 255.0
+        # marker.color.a = 0.4
         marker.color.b = 0.0
-        marker.color.g = detection.score * 255.0
-        marker.color.r = (1.0 - detection.score) * 255.0
-        marker.color.a = 0.4
+        marker.color.g = 255.0
+        marker.color.r = 1.0
+        marker.color.a = 0.7
 
-        marker.lifetime = Duration(seconds=0.5).to_msg()
+        marker.lifetime = Duration(seconds=1.0).to_msg()
+        marker.text = detection.class_name
+
+        return marker
+    
+    def create_axis_marker(self, detection: Detection, direction: str) -> Marker:
+
+        bbox3d = detection.bbox3d
+
+        marker = Marker()
+        marker.header.frame_id = bbox3d.frame_id
+
+        marker.ns = "yolov8_3d"
+        marker.type = Marker.ARROW
+        marker.action = Marker.ADD
+        marker.frame_locked = False
+
+        marker.pose.position.x = bbox3d.center.position.x
+        marker.pose.position.y = bbox3d.center.position.y
+        marker.pose.position.z = bbox3d.center.position.z
+
+        if direction == "x":
+            o_x = 0.0
+            o_y = 0.0
+            o_z = 0.0
+            o_w = 1.0
+            c_r = 255.0
+            c_g = 0.0
+            c_b = 0.0
+        if direction == "y":
+            o_x = 0.0
+            o_y = 0.0
+            o_z = 0.707
+            o_w = 0.707
+            c_r = 0.0
+            c_g = 255.0
+            c_b = 0.0
+        if direction == "z":
+            o_x = 0.0
+            o_y = -0.707
+            o_z = 0.0
+            o_w = 0.707
+            c_r = 0.0
+            c_g = 0.0
+            c_b = 255.0
+            
+
+        marker.pose.orientation.x = o_x
+        marker.pose.orientation.y = o_y
+        marker.pose.orientation.z = o_z
+        marker.pose.orientation.w = o_w
+        marker.scale.x = 0.080
+        marker.scale.y = 0.003
+        marker.scale.z = 0.003
+
+        # marker.color.b = 0.0
+        # marker.color.g = detection.score * 255.0
+        # marker.color.r = (1.0 - detection.score) * 255.0
+        # marker.color.a = 0.4
+        marker.color.b = c_b
+        marker.color.g = c_g
+        marker.color.r = c_r
+        marker.color.a = 0.7
+
+        marker.lifetime = Duration(seconds=1.0).to_msg()
+        marker.text = detection.class_name
+
+        return marker
+    
+    def create_label_marker(self, detection: Detection) -> Marker:
+
+        bbox3d = detection.bbox3d
+
+        marker = Marker()
+        marker.header.frame_id = bbox3d.frame_id
+
+        marker.ns = "yolov8_3d"
+        marker.type = Marker.TEXT_VIEW_FACING
+        marker.action = Marker.ADD
+        marker.frame_locked = False
+
+        marker.pose.position.x = bbox3d.center.position.x + 0.05
+        marker.pose.position.y = bbox3d.center.position.y 
+        marker.pose.position.z = bbox3d.center.position.z + 0.05
+
+
+        marker.scale.z = 0.02
+
+        # marker.color.b = 0.0
+        # marker.color.g = detection.score * 255.0
+        # marker.color.r = (1.0 - detection.score) * 255.0
+        # marker.color.a = 0.4
+        marker.color.b = 255.0
+        marker.color.g = 0.0
+        marker.color.r = 0.0
+        marker.color.a = 1.0
+
+        marker.lifetime = Duration(seconds=1.0).to_msg()
         marker.text = detection.class_name
 
         return marker
@@ -183,9 +289,9 @@ class DebugNode(Node):
         marker.pose.orientation.y = 0.0
         marker.pose.orientation.z = 0.0
         marker.pose.orientation.w = 1.0
-        marker.scale.x = 0.05
-        marker.scale.y = 0.05
-        marker.scale.z = 0.05
+        marker.scale.x = 0.003
+        marker.scale.y = 0.003
+        marker.scale.z = 0.003
 
         marker.color.b = keypoint.score * 255.0
         marker.color.g = 0.0
@@ -196,7 +302,7 @@ class DebugNode(Node):
         marker.text = str(keypoint.id)
 
         return marker
-
+    
     def detections_cb(self, img_msg: Image, detection_msg: DetectionArray) -> None:
 
         cv_image = self.cv_bridge.imgmsg_to_cv2(img_msg)
@@ -210,9 +316,12 @@ class DebugNode(Node):
             label = detection.class_name
 
             if label not in self._class_to_color:
-                r = random.randint(0, 255)
-                g = random.randint(0, 255)
-                b = random.randint(0, 255)
+                # r = random.randint(0, 255)
+                # g = random.randint(0, 255)
+                # b = random.randint(0, 255)
+                r = 0
+                g = 255
+                b = 0
                 self._class_to_color[label] = (r, g, b)
 
             color = self._class_to_color[label]
@@ -223,6 +332,26 @@ class DebugNode(Node):
 
             if detection.bbox3d.frame_id:
                 marker = self.create_bb_marker(detection)
+                marker.header.stamp = img_msg.header.stamp
+                marker.id = len(bb_marker_array.markers)
+                bb_marker_array.markers.append(marker)
+
+                marker = self.create_axis_marker(detection, "x")
+                marker.header.stamp = img_msg.header.stamp
+                marker.id = len(bb_marker_array.markers)
+                bb_marker_array.markers.append(marker)
+
+                marker = self.create_axis_marker(detection, "y")
+                marker.header.stamp = img_msg.header.stamp
+                marker.id = len(bb_marker_array.markers)
+                bb_marker_array.markers.append(marker)
+
+                marker = self.create_axis_marker(detection, "z")
+                marker.header.stamp = img_msg.header.stamp
+                marker.id = len(bb_marker_array.markers)
+                bb_marker_array.markers.append(marker)
+
+                marker = self.create_label_marker(detection)
                 marker.header.stamp = img_msg.header.stamp
                 marker.id = len(bb_marker_array.markers)
                 bb_marker_array.markers.append(marker)

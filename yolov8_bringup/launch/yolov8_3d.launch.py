@@ -70,7 +70,8 @@ def generate_launch_description():
     target_frame = LaunchConfiguration("target_frame")
     target_frame_cmd = DeclareLaunchArgument(
         "target_frame",
-        default_value="base_link",
+        # default_value="base_link",
+        default_value="world",
         description="Target frame to transform the 3D boxes")
 
     maximum_detection_threshold = LaunchConfiguration(
