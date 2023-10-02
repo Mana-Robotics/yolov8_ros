@@ -54,6 +54,12 @@ def generate_launch_description():
         "threshold",
         default_value="0.5",
         description="Minimum probability of a detection to be published")
+    
+    classes = LaunchConfiguration("classes")
+    classes_cmd = DeclareLaunchArgument(
+        "classes",
+        default_value= "1,40,42,43,44,45,46,47,48,50,51,52,68",
+        description="List of object class ids to be considered for dedection, e.g. 0 for humans")
 
     input_image_topic = LaunchConfiguration("input_image_topic")
     input_image_topic_cmd = DeclareLaunchArgument(
@@ -98,7 +104,8 @@ def generate_launch_description():
         parameters=[{"model": model,
                      "device": device,
                      "enable": enable,
-                     "threshold": threshold}],
+                     "threshold": threshold,
+                     "classes": classes}],
         remappings=[("image_raw", input_image_topic)]
     )
 
@@ -138,6 +145,7 @@ def generate_launch_description():
     ld.add_action(device_cmd)
     ld.add_action(enable_cmd)
     ld.add_action(threshold_cmd)
+    ld.add_action(classes_cmd)
     ld.add_action(input_image_topic_cmd)
     ld.add_action(input_points_topic_cmd)
     ld.add_action(target_frame_cmd)

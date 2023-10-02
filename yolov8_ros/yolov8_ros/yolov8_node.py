@@ -60,6 +60,14 @@ class Yolov8Node(Node):
         self.declare_parameter("enable", True)
         self.enable = self.get_parameter(
             "enable").get_parameter_value().bool_value
+        
+        self.declare_parameter("classes", "")
+        classes_param = self.get_parameter("classes").value
+        if classes_param:
+            self.classes = [int(x) for x in classes_param.split(',')]
+        else:
+            self.classes = []  # Default to an empty list if parameter is not set or empty
+
 
         self.cv_bridge = CvBridge()
         self.yolo = YOLO(model)
@@ -181,6 +189,7 @@ class Yolov8Node(Node):
             cv_image = self.cv_bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
             results = self.yolo.predict(
                 source=cv_image,
+                classes=self.classes,
                 verbose=False,
                 stream=False,
                 conf=self.threshold,
